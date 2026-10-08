@@ -3,5 +3,5 @@
   // name은 Cloudflare 대시보드의 Worker 이름과 같아야 함
   "name": "diet-pages-dev",
   "compatibility_date": "2025-09-01",
-  "assets": { "directory": "./" }
+  "assets": { "directory": "./public" }
 }
