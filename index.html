@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>2주 다이어트 챌린지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 한 장씩 넘기는 날짜 카드: 위에 날짜 칩 → 가운데 카드 1장(스와이프) → 아래 이전/다음 */
+:root{
+  --bg:#fff8f1; --card:#ffffff; --ink:#2b2420; --muted:#8a7e75; --line:#f0e3d6;
+  --accent:#ff7a59; --accent-soft:#ffe5dc; --on-accent:#ffffff;
+  --wo:#e1edfb; --rest:#efe8fd; --yt:#e8332f;
+  --shadow:0 6px 20px rgba(120,80,40,.08);
+  --m0:#ffe3d3; --m1:#dff3e4; --m2:#e3ecfb; --m3:#fbe3ef; --m4:#fff1c7; --m5:#ece4fb; --m6:#dcf3f3; --m7:#f1ead9;
+  --display:"Jua","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1917; --card:#27231f; --ink:#f5ede6; --muted:#a8998c; --line:#3a332d;
+    --accent:#ff8a6b; --accent-soft:#4a2c22; --on-accent:#1c1917;
+    --wo:#1e2e44; --rest:#2e2640; --yt:#ff5a55; --shadow:0 6px 20px rgba(0,0,0,.3);
+    --m0:#4a2e22; --m1:#1f3a2a; --m2:#1f2e45; --m3:#43243a; --m4:#43391b; --m5:#312845; --m6:#193b3b; --m7:#3a3326;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1917; --card:#27231f; --ink:#f5ede6; --muted:#a8998c; --line:#3a332d;
+  --accent:#ff8a6b; --accent-soft:#4a2c22; --on-accent:#1c1917;
+  --wo:#1e2e44; --rest:#2e2640; --yt:#ff5a55; --shadow:0 6px 20px rgba(0,0,0,.3);
+    --m0:#4a2e22; --m1:#1f3a2a; --m2:#1f2e45; --m3:#43243a; --m4:#43391b; --m5:#312845; --m6:#193b3b; --m7:#3a3326;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden}
+.wrap{max-width:520px;margin:0 auto;padding-inline:16px;padding-block:20px 32px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.hero h1{font-size:clamp(24px,6.5vw,32px)}
+.hero h1 span{color:var(--accent)}
+.dday{font-family:var(--display);font-size:15px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:5px 14px}
+
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none;scroll-snap-type:x proximity}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;width:46px;border:none;border-radius:14px;background:var(--card);color:var(--ink);box-shadow:var(--shadow);padding:6px 0;cursor:pointer;font:inherit;scroll-snap-align:center;position:relative}
+.chip .w{display:block;font-size:11px;color:var(--muted)}
+.chip .d{display:block;font-family:var(--display);font-size:18px;line-height:1.2}
+.chip .e{display:block;font-size:12px}
+.chip.on{background:var(--accent);color:var(--on-accent)}
+.chip.on .w{color:var(--on-accent)}
+.chip.today::after{content:"";position:absolute;top:4px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.chip.on.today::after{background:var(--on-accent)}
+
+.track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:16px;scrollbar-width:none;padding:4px 2px 16px;margin-inline:-2px}
+.track::-webkit-scrollbar{display:none}
+.card{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;background:var(--card);border-radius:24px;padding:20px;box-shadow:var(--shadow);min-width:0}
+.dh{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}
+.dh h2{font-size:28px}
+.dh .n{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.dh .tt{margin-left:auto;background:var(--accent);color:var(--on-accent);font-family:var(--display);font-size:14px;padding:2px 10px;border-radius:999px}
+.lbl{font-family:var(--display);font-size:16px;color:var(--muted);margin:0 0 8px}
+.meals{display:grid;gap:6px;margin-bottom:18px}
+.meal{display:flex;gap:10px;align-items:center;background:var(--bg);border-radius:12px;padding:10px 12px}
+.tag{font-size:12px;font-weight:700;color:var(--accent);min-width:30px;flex:none}
+.wo{border-radius:16px;padding:14px;background:var(--wo)}
+.wo.rest{background:var(--rest)}
+.wo .t{font-family:var(--display);font-size:22px}
+.wo .g{font-size:14px;color:var(--muted)}
+.wo ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.wo li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wo li .tag{min-width:52px}
+.yt{font-size:12px;font-weight:700;color:#fff;background:var(--yt);padding:2px 10px;border-radius:999px;text-decoration:none}
+.yt:focus-visible,.chip:focus-visible,.nav button:focus-visible,.dday:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+.nav{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{border:none;background:var(--accent-soft);color:var(--accent);font-family:var(--display);font-size:16px;padding:8px 18px;border-radius:14px;cursor:pointer}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav .pos{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.week{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:14px 10px;margin-bottom:16px}
+.week .tw{overflow-x:auto}
+.week .wt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.week h2{font-size:20px}
+.week .bf{font-size:13px;color:var(--muted);text-align:right}
+.week table{width:100%;border-collapse:collapse;font-size:clamp(11px,3vw,14px)}
+.week th{font-size:12px;font-weight:700;color:var(--muted);text-align:left;padding:0 3px 6px}
+.week td{padding:6px 3px;white-space:nowrap;border-top:1px solid var(--line);vertical-align:top;word-break:keep-all}
+.week td:first-child{font-family:var(--display);font-size:15px;color:var(--accent);width:1.8em;text-align:center}
+.week tr.now td{background:var(--accent-soft)}
+.week tr.now td:first-child{border-radius:10px 0 0 10px}
+.week tr.now td:last-child{border-radius:0 10px 10px 0}
+.pill{display:inline-block;padding:2px 6px;border-radius:7px;white-space:nowrap}
+.c0{background:var(--m0)}
+.c1{background:var(--m1)}
+.c2{background:var(--m2)}
+.c3{background:var(--m3)}
+.c4{background:var(--m4)}
+.c5{background:var(--m5)}
+.c6{background:var(--m6)}
+.c7{background:var(--m7)}
+.menu{display:grid;gap:12px}
+.tile{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:none;background:var(--card);color:var(--ink);box-shadow:var(--shadow);border-radius:20px;padding:18px;font:inherit;cursor:pointer;transition:transform .15s}
+.tile:hover{transform:translateY(-2px)}
+.tile:focus-visible,.back:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.tile .ic{font-size:30px;width:52px;height:52px;display:grid;place-items:center;background:var(--bg);border-radius:16px;flex:none}
+.tile .tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.tile b{font-family:var(--display);font-weight:400;font-size:22px}
+.tile small{color:var(--muted);font-size:13px}
+.tile .ar{font-size:28px;color:var(--muted)}
+.tile.hot{background:var(--accent);color:var(--on-accent)}
+.tile.hot small,.tile.hot .ar{color:var(--on-accent);opacity:.85}
+.tile.hot .ic{background:var(--on-accent)}
+.back{border:none;background:none;color:var(--accent);font-family:var(--display);font-size:17px;padding:4px 2px 10px;cursor:pointer}
+.nav .pos{border:none;background:none;font:inherit;cursor:pointer;padding:6px 8px}
+@media (prefers-reduced-motion: reduce){ .track{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>2주 다이어트 <span>챌린지</span> 🔥</h1>
+    <span class="dday" id="dday"></span>
+  </header>
+
+  <nav class="menu" id="home" aria-label="메뉴">
+    <button class="tile hot" data-go="cards" type="button"><span class="ic">📅</span><span class="tx"><b>오늘 카드</b><small id="todayHint"></small></span><span class="ar">›</span></button>
+    <button class="tile" data-go="meals" type="button"><span class="ic">🍚</span><span class="tx"><b>요일별 식단</b><small>월~일 점심·저녁 한눈에</small></span><span class="ar">›</span></button>
+    <button class="tile" data-go="work" type="button"><span class="ic">🏋️</span><span class="tx"><b>요일별 운동</b><small>풋살 · 홈트 · 러닝 · 휴식</small></span><span class="ar">›</span></button>
+  </nav>
+
+  <section id="meals" hidden>
+    <button class="back" type="button">‹ 처음으로</button>
+    <div class="week">
+      <div class="wt"><h2>🍚 요일별 식단</h2><span class="bf">아침은 매일 단백질 쉐이크<br>주말 간식: 저지방우유 + 아몬드 씨리얼</span></div>
+      <div class="tw"><table><thead><tr><th></th><th>점심</th><th>저녁</th></tr></thead><tbody id="weekRows"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="work" hidden>
+    <button class="back" type="button">‹ 처음으로</button>
+    <div class="week">
+      <div class="wt"><h2>🏋️ 요일별 운동</h2></div>
+      <div class="tw"><table><thead><tr><th></th><th>운동</th><th>내용</th></tr></thead><tbody id="workRows"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="cards" hidden>
+    <button class="back" type="button">‹ 처음으로</button>
+    <nav class="chips" id="chips" aria-label="날짜 선택"></nav>
+    <main class="track" id="track"></main>
+    <div class="nav">
+      <button id="prev" type="button">◀ 이전</button>
+      <button id="todayBtn" class="pos" type="button"></button>
+      <button id="next" type="button">다음 ▶</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const START = new Date(2026, 9, 8);
+const WD = ['일','월','화','수','목','금','토'];
+
+const HOME = {t:'홈트', e:'🏠', goal:'상체 + 하체 + 교정 + 스트레칭', items:[
+  ['상체','15분 상체 홈트','https://www.youtube.com/watch?v=9zLD6cSgHdY&t=447s'],
+  ['하체','15분 하체 홈트','https://www.youtube.com/watch?v=QivqNZHm6rA'],
+  ['교정','거북목·버섯목 교정 1세트','https://www.youtube.com/watch?v=IsCk4-b-c2E'],
+  ['스트레칭','전신 스트레칭','https://www.youtube.com/watch?v=y7iRRoRm7i8'],
+]};
+// 요일별 (getDay): 월·목 풋살 / 화·수·토 홈트 / 금 휴식 / 일 오전 러닝
+const ROUTINE = {
+  0:{t:'오전 러닝', e:'🏃', goal:'3~5km'},
+  1:{t:'풋살', e:'⚽', goal:'2시간 고강도 유산소'},
+  2:HOME,
+  3:HOME,
+  4:{t:'풋살', e:'⚽', goal:'2시간 고강도 유산소'},
+  5:{t:'휴식', e:'😴', goal:'푹 쉬기', rest:true},
+  6:HOME,
+};
+
+// 요일별 고정 식단 (getDay): 아침은 매일 단백질 쉐이크
+const FREE = '샐러드 or 단백질 식품';
+const TOFU = '순두부 간장 비빔 + 양배추 샐러드';
+const SNACK = '저지방우유 + 아몬드 씨리얼';
+const MEAL = {
+  0:{l:'프레퍼스 (배달)',     d:TOFU, s:SNACK},
+  1:{l:'샐러디/영칼/그릭', d:'압구정 근처 다이어트 식당'},
+  2:{l:'샐러디/영칼/그릭', d:'닭가슴살 + 방울토마토'},
+  3:{l:'샐러디/영칼/그릭', d:TOFU},
+  4:{l:'샐러디/영칼/그릭', d:'압구정 근처 다이어트 식당'},
+  5:{l:'샐러디/영칼/그릭', d:'제로스토어 식품'},
+  6:{l:'연어',              d:TOFU, s:SNACK},
+};
+
+// 같은 메뉴 = 같은 색
+const COLOR = {};
+['단백질 쉐이크', ...[1,2,3,4,5,6,0].flatMap(g=>[MEAL[g].l, MEAL[g].d])].forEach(t=>{ if (!(t in COLOR)) COLOR[t] = Object.keys(COLOR).length % 8; });
+const pill = t => `<span class="pill c${COLOR[t]}">${t}</span>`;
+
+const dateOf = i => { const d = new Date(START); d.setDate(d.getDate()+i); return d; };
+const now = new Date(); now.setHours(0,0,0,0);
+const todayIdx = Math.round((now - START) / 864e5);
+const startIdx = Math.min(13, Math.max(0, todayIdx));
+
+const track = document.getElementById('track'), chips = document.getElementById('chips');
+let cards = '', chipHtml = '';
+for (let i=0;i<14;i++){
+  const d = dateOf(i), w = ROUTINE[d.getDay()], m = MEAL[d.getDay()], isToday = i===todayIdx;
+  chipHtml += `<button class="chip${isToday?' today':''}" data-i="${i}" type="button" aria-label="${d.getMonth()+1}월 ${d.getDate()}일">
+    <span class="w">${WD[d.getDay()]}</span><span class="d">${d.getDate()}</span><span class="e">${w.e}</span></button>`;
+  cards += `<section class="card" id="day${i}" aria-label="${d.getMonth()+1}월 ${d.getDate()}일">
+    <div class="dh"><h2>${d.getMonth()+1}/${d.getDate()} (${WD[d.getDay()]})</h2><span class="n">DAY ${i+1}</span>
+      ${isToday?'<span class="tt">오늘</span>':''}</div>
+    <div class="lbl">🍚 식단</div>
+    <div class="meals">
+      <div class="meal"><span class="tag">아침</span>단백질 쉐이크</div>
+      <div class="meal"><span class="tag">점심</span>${m.l}</div>
+      <div class="meal"><span class="tag">저녁</span>${m.d}</div>
+      ${m.s ? `<div class="meal"><span class="tag">간식</span>${m.s}</div>` : ''}
+    </div>
+    <div class="lbl">🏋️ 운동</div>
+    <div class="wo${w.rest?' rest':''}">
+      <div class="t">${w.t} ${w.e}</div><div class="g">${w.goal}</div>
+      ${w.items ? `<ul>${w.items.map(x=>`<li><span class="tag">${x[0]}</span>${x[1]} <a class="yt" href="${x[2]}" target="_blank" rel="noopener">▶ 영상</a></li>`).join('')}</ul>` : ''}
+    </div>
+  </section>`;
+}
+track.innerHTML = cards;
+document.getElementById('workRows').innerHTML = [1,2,3,4,5,6,0].map(g=>
+  `<tr class="${g===now.getDay()?'now':''}"><td>${WD[g]}</td><td>${ROUTINE[g].e} ${ROUTINE[g].t}</td><td>${ROUTINE[g].goal}</td></tr>`).join('');
+document.getElementById('weekRows').innerHTML = [1,2,3,4,5,6,0].map(g=>
+  `<tr class="${g===now.getDay()?'now':''}"><td>${WD[g]}</td><td>${pill(MEAL[g].l)}</td><td>${pill(MEAL[g].d)}</td></tr>`).join('');
+chips.innerHTML = chipHtml;
+
+let cur = startIdx;
+function go(i, smooth=true){
+  i = Math.max(0, Math.min(13, i));
+  track.scrollTo({left: i * (track.clientWidth + 16), behavior: smooth ? 'smooth' : 'auto'});
+  mark(i);
+}
+function mark(i){
+  cur = i;
+  chips.querySelectorAll('.chip').forEach((c,k)=>c.classList.toggle('on', k===i));
+  const chip = chips.children[i];
+  chips.scrollTo({left: chip.offsetLeft - chips.clientWidth/2 + chip.clientWidth/2, behavior:'smooth'});
+  document.getElementById('todayBtn').textContent = `${i+1} / 14`;
+  document.getElementById('prev').disabled = i===0;
+  document.getElementById('next').disabled = i===13;
+}
+let t;
+track.addEventListener('scroll', ()=>{
+  clearTimeout(t);
+  t = setTimeout(()=>{ const i = Math.round(track.scrollLeft / (track.clientWidth + 16)); if (i!==cur) mark(i); }, 80);
+});
+chips.addEventListener('click', e=>{ const b = e.target.closest('.chip'); if (b) go(+b.dataset.i); });
+document.getElementById('prev').onclick = ()=>go(cur-1);
+document.getElementById('next').onclick = ()=>go(cur+1);
+document.addEventListener('keydown', e=>{ if (document.getElementById('cards').hidden) return; if (e.key==='ArrowLeft') go(cur-1); if (e.key==='ArrowRight') go(cur+1); });
+window.addEventListener('resize', ()=>{ if (!document.getElementById('cards').hidden) go(cur, false); });
+
+const dd = document.getElementById('dday');
+dd.textContent = todayIdx < 0 ? `D-${-todayIdx}` : todayIdx < 14 ? `DAY ${todayIdx+1}` : '완주 🏆';
+const sd = dateOf(startIdx);
+document.getElementById('todayHint').textContent = todayIdx>=0 && todayIdx<14
+  ? `${sd.getMonth()+1}/${sd.getDate()} (${WD[sd.getDay()]}) 식단·운동 바로 보기` : '날짜별로 넘겨 보기';
+document.getElementById('todayBtn').onclick = ()=>go(startIdx);
+
+// 화면 전환: 처음 메뉴 ↔ 식단 / 운동 / 카드
+const VIEWS = ['home','meals','work','cards'];
+function show(v){
+  if (!VIEWS.includes(v)) v = 'home';
+  VIEWS.forEach(k=>document.getElementById(k).hidden = k!==v);
+  try { history.replaceState(null, '', v==='home' ? location.pathname : '#'+v); } catch(e) {}
+  if (v==='cards') requestAnimationFrame(()=>go(cur, false));
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ if (b.dataset.go==='cards') cur = startIdx; show(b.dataset.go); });
+document.querySelectorAll('.back').forEach(b=>b.onclick=()=>show('home'));
+document.addEventListener('keydown', e=>{ if (e.key==='Escape') show('home'); });
+show(location.hash.slice(1));
+</script>
+</body>
+</html>
