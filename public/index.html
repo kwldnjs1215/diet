@@ -113,6 +113,27 @@ h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
 .tile.hot .ic{background:var(--on-accent)}
 .back{border:none;background:none;color:var(--accent);font-family:var(--display);font-size:17px;padding:4px 2px 10px;cursor:pointer}
 .nav .pos{border:none;background:none;font:inherit;cursor:pointer;padding:6px 8px}
+.bcard{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px;display:grid;gap:10px}
+.bcard h2{font-size:22px}
+.bhint{margin:0;color:var(--muted);font-size:14px}
+.bhead{display:flex;justify-content:space-between;align-items:center}
+.brow{display:flex;gap:8px;align-items:center}
+.brow.end{justify-content:flex-end}
+.bcard input,.bcard textarea{width:100%;min-width:0;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;resize:vertical}
+.bcard input:focus,.bcard textarea:focus{outline:none;border-color:var(--accent)}
+.bbtn{flex:none;border:none;background:var(--accent);color:var(--on-accent);font-family:var(--display);font-size:16px;padding:9px 18px;border-radius:12px;cursor:pointer}
+.bbtn:disabled{opacity:.5;cursor:default}
+.blink{border:none;background:none;color:var(--muted);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
+.berr{margin:0 auto 0 0;color:var(--accent);font-size:13px}
+.posts{display:grid;gap:10px}
+.post{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px}
+.post .ph{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.post .pn{font-family:var(--display);font-size:17px}
+.post .pt{font-size:12px;color:var(--muted)}
+.post .pd{margin-left:auto}
+.post .pd.armed{color:var(--accent);font-weight:700}
+.post .pb{white-space:pre-wrap;word-break:break-word}
+.empty{text-align:center;color:var(--muted);padding:24px 0}
 @media (prefers-reduced-motion: reduce){ .track{scroll-behavior:auto} }
 </style>
 </head>
@@ -128,6 +149,7 @@ h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
     <button class="tile hot" data-go="cards" type="button"><span class="ic">📅</span><span class="tx"><b>오늘 카드</b><small id="todayHint"></small></span><span class="ar">›</span></button>
     <button class="tile" data-go="meals" type="button"><span class="ic">🍚</span><span class="tx"><b>요일별 식단</b><small>월~일 점심·저녁 한눈에</small></span><span class="ar">›</span></button>
     <button class="tile" data-go="work" type="button"><span class="ic">🏋️</span><span class="tx"><b>요일별 운동</b><small>풋살 · 홈트 · 러닝 · 휴식</small></span><span class="ar">›</span></button>
+    <button class="tile" data-go="board" type="button"><span class="ic">💬</span><span class="tx"><b>게시판</b><small>비밀번호 아는 사람만 · 인증·응원 남기기</small></span><span class="ar">›</span></button>
   </nav>
 
   <section id="meals" hidden>
@@ -154,6 +176,28 @@ h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
       <button id="prev" type="button">◀ 이전</button>
       <button id="todayBtn" class="pos" type="button"></button>
       <button id="next" type="button">다음 ▶</button>
+    </div>
+  </section>
+
+  <section id="board" hidden>
+    <button class="back" type="button">‹ 처음으로</button>
+    <form class="bcard" id="lockForm" autocomplete="off">
+      <h2>🔒 게시판 입장</h2>
+      <p class="bhint">비밀번호를 입력하면 들어갈 수 있어요</p>
+      <div class="brow">
+        <input id="boardPass" type="password" placeholder="비밀번호" aria-label="비밀번호">
+        <button type="submit" class="bbtn">입장</button>
+      </div>
+      <p class="berr" id="lockErr" hidden></p>
+    </form>
+    <div id="boardIn" hidden>
+      <form class="bcard" id="postForm">
+        <div class="bhead"><h2>💬 게시판</h2><button type="button" class="blink" id="logout">나가기</button></div>
+        <input id="postName" maxlength="20" placeholder="닉네임" aria-label="닉네임">
+        <textarea id="postBody" rows="3" maxlength="1000" placeholder="오늘 식단·운동 인증, 응원 한마디!" aria-label="내용"></textarea>
+        <div class="brow end"><span class="berr" id="postErr" hidden></span><button type="submit" class="bbtn" id="postBtn">올리기</button></div>
+      </form>
+      <div id="posts" class="posts"></div>
     </div>
   </section>
 </div>
@@ -267,14 +311,81 @@ document.getElementById('todayHint').textContent = todayIdx>=0 && todayIdx<14
 document.getElementById('todayBtn').onclick = ()=>go(startIdx);
 
 // 화면 전환: 처음 메뉴 ↔ 식단 / 운동 / 카드
-const VIEWS = ['home','meals','work','cards'];
+const VIEWS = ['home','meals','work','cards','board'];
 function show(v){
   if (!VIEWS.includes(v)) v = 'home';
   VIEWS.forEach(k=>document.getElementById(k).hidden = k!==v);
   try { history.replaceState(null, '', v==='home' ? location.pathname : '#'+v); } catch(e) {}
   if (v==='cards') requestAnimationFrame(()=>go(cur, false));
+  if (v==='board') openBoard();
   window.scrollTo(0,0);
 }
+// 게시판: 비밀번호는 서버(Cloudflare)에서 확인, 통과하면 이 기기에 기억
+const ls = {
+  get: k => { try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } },
+  set: (k,v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch(e) {} },
+};
+let pass = ls.get('boardPass');
+const $ = id => document.getElementById(id);
+const escH = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(method, body, query=''){
+  const r = await fetch('/api/posts' + query, {method, headers:{'content-type':'application/json','x-board-pass':pass}, body: body ? JSON.stringify(body) : undefined});
+  let data = {}; try { data = await r.json(); } catch(e) {}
+  return {status:r.status, data};
+}
+function setLocked(locked, msg=''){
+  $('lockForm').hidden = !locked; $('boardIn').hidden = locked;
+  $('lockErr').hidden = !msg; $('lockErr').textContent = msg;
+}
+function fmt(s){
+  const d = new Date(String(s).replace(' ','T') + 'Z');
+  return isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+async function loadPosts(){
+  let res;
+  try { res = await api('GET'); } catch(e) { setLocked(true, '인터넷 연결을 확인해 주세요'); return; }
+  if (res.status === 401) { pass=''; ls.set('boardPass',''); setLocked(true, '비밀번호가 맞지 않아요'); return; }
+  if (res.status !== 200) { setLocked(true, '게시판이 아직 준비 중이에요'); return; }
+  ls.set('boardPass', pass); setLocked(false);
+  const posts = res.data.posts || [];
+  $('posts').innerHTML = posts.length ? posts.map(p=>`<article class="post">
+      <div class="ph"><span class="pn">${escH(p.name)}</span><span class="pt">${fmt(p.created_at)}</span>
+        <button type="button" class="blink pd" data-del="${p.id}">삭제</button></div>
+      <div class="pb">${escH(p.body)}</div></article>`).join('')
+    : '<p class="empty">아직 글이 없어요. 첫 글을 남겨보세요!</p>';
+}
+function openBoard(){
+  $('postName').value = ls.get('boardName');
+  if (pass) loadPosts(); else setLocked(true);
+}
+$('lockForm').onsubmit = e => { e.preventDefault(); pass = $('boardPass').value.trim(); $('boardPass').value=''; if (pass) loadPosts(); };
+$('logout').onclick = () => { pass=''; ls.set('boardPass',''); setLocked(true); };
+$('postForm').onsubmit = async e => {
+  e.preventDefault();
+  const name = $('postName').value.trim(), body = $('postBody').value.trim(), err = $('postErr'), btn = $('postBtn');
+  err.hidden = true;
+  if (!name || !body) { err.textContent = '닉네임과 내용을 적어주세요'; err.hidden = false; return; }
+  btn.disabled = true;
+  try {
+    const res = await api('POST', {name, body});
+    if (res.status === 201) { ls.set('boardName', name); $('postBody').value=''; await loadPosts(); }
+    else if (res.status === 401) await loadPosts();
+    else { err.textContent = '올리지 못했어요. 다시 시도해 주세요'; err.hidden = false; }
+  } catch(_) { err.textContent = '인터넷 연결을 확인해 주세요'; err.hidden = false; }
+  btn.disabled = false;
+};
+// 삭제는 두 번 눌러야 실행 (한 번 누르면 "정말 삭제?"로 바뀌고 3초 뒤 원래대로)
+$('posts').onclick = async e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  if (!b.classList.contains('armed')) {
+    b.classList.add('armed'); b.textContent = '정말 삭제?';
+    setTimeout(()=>{ b.classList.remove('armed'); b.textContent='삭제'; }, 3000); return;
+  }
+  b.disabled = true;
+  try { await api('DELETE', null, '?id=' + b.dataset.del); } catch(_) {}
+  loadPosts();
+};
+
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ if (b.dataset.go==='cards') cur = startIdx; show(b.dataset.go); });
 document.querySelectorAll('.back').forEach(b=>b.onclick=()=>show('home'));
 document.addEventListener('keydown', e=>{ if (e.key==='Escape') show('home'); });
